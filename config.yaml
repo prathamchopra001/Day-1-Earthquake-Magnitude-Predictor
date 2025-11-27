@@ -1,0 +1,41 @@
+api:
+  base_url: "https://earthquake.usgs.gov/fdsnws/event/1/query"
+  format: "geojson"
+  default_params:
+    minmagnitude: 2.5
+    orderby: "time"
+    limit: 20000
+
+data:
+  days_to_fetch: 30
+  min_magnitude_for_training: 2.5
+  database_path: "data/earthquake.db"
+
+features:
+  rolling_windows:
+    - 7
+    - 30
+  spatial_radius_km : 200
+  significant_magnitude_threshold : 4.0
+
+model:
+  test_size: 0.2
+  random_state: 42
+  kernel:
+    rbf_length_scale: 1.0
+    rbf_length_scale_bounds: [0.1, 10.0]
+    white_noise_level: 0.1
+    white_noise_bounds: [0.01, 1.0]
+  n_restarts_optimizer: 5
+
+paths:
+  model: "models/gp_model.pkl"
+  scaler: "models/scaler.pkl"
+  feature_config: "models/feature_config.json"
+
+app:
+  title: "Earthquake Magnitude Predictor"
+  default_latitude: 0.0
+  default_longitude: 0.0
+  default_depth: 10.0
+  map_zoom: 2
