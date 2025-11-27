@@ -1,252 +1,317 @@
-
 # 🌍 Earthquake Magnitude Predictor
 
-A machine learning project that predicts earthquake magnitude with **uncertainty quantification** using  **Gaussian Process Regression** .
+An AI-powered earthquake magnitude prediction system using **Gaussian Process Regression** with uncertainty quantification. Features real-time USGS data, interactive maps, and local LLM integration via Ollama.
 
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/)
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)
+![Streamlit](https://img.shields.io/badge/Streamlit-1.29+-red.svg)
+![License](https://img.shields.io/badge/License-MIT-green.svg)
+
+---
 
 ## ✨ Features
 
-* 🔄 **Real-time data** from USGS Earthquake API
-* 🎯 **Gaussian Process Regression** for probabilistic predictions
-* 📊 **Confidence intervals** for uncertainty quantification
-* 🗺️ **Interactive map** with earthquake visualization
-* 📈 **Historical analysis** of seismic activity
-* ☁️ **Deployable** to Streamlit Cloud
+| Feature                          | Description                                                 |
+| -------------------------------- | ----------------------------------------------------------- |
+| 🎯**Magnitude Prediction** | Gaussian Process Regression with uncertainty quantification |
+| 📊**Confidence Intervals** | 95% CI showing possible magnitude range                     |
+| 🗺️**Interactive Map**    | Click anywhere to get predictions, view recent earthquakes  |
+| 🌐**Real-Time Data**       | Live USGS Earthquake API integration                        |
+| 🤖**AI Summaries**         | Local LLM via Ollama generates plain-English analysis       |
+| 🌙**Dark Theme**           | Modern dark UI design                                       |
+| 📍**Location Search**      | Geocoding via OpenStreetMap Nominatim                       |
 
-## 🖥️ Screenshots
+---
 
-The application provides:
+## 📸 Screenshot
 
-* Interactive world map showing recent earthquakes
-* Location selection for predictions
-* Magnitude prediction with 95% confidence intervals
-* Probability distribution visualization
-* Regional seismic context
+<img src="app\assets\image.png" alt="Earthquake Predictor">
+
+---
+
+## 🚀 Quick Start
+
+### 1. Clone & Install
+
+```bash
+git clone https://github.com/yourusername/earthquake-magnitude-predictor.git
+cd earthquake-magnitude-predictor
+
+# Create virtual environment (optional but recommended)
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# venv\Scripts\activate   # Windows
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### 2. Setup Data & Train Model
+
+```bash
+# Fetch real earthquake data from USGS (last 30 days)
+python scripts/run_etl.py --days 30 --min-mag 2.5
+
+# Generate features
+python scripts/run_features.py
+
+# Train the model
+python scripts/train_model.py --kernel composite --max-samples 2000
+```
+
+### 3. Run the App
+
+```bash
+streamlit run app/streamlit_app.py
+```
+
+Open http://localhost:8501 in your browser.
+
+---
+
+## 🤖 Ollama Integration (Optional)
+
+The app uses a local LLM to generate plain-English earthquake analysis.
+
+### Setup Ollama
+
+```bash
+# Install Ollama
+curl -fsSL https://ollama.com/install.sh | sh
+
+# Pull a small model (recommended: llama3.2 ~2GB)
+ollama pull llama3.2
+
+# Or smaller alternatives
+ollama pull phi3         # 2.3GB
+ollama pull gemma2:2b    # 1.6GB
+
+# Start Ollama server
+ollama serve
+```
+
+The app will automatically detect Ollama and show:
+
+- 🟢 **Connected** - AI summaries enabled
+- 🔴 **Offline** - Falls back to template-based summaries
+
+---
 
 ## 📁 Project Structure
 
 ```
 earthquake-magnitude-predictor/
-├── config.yaml              # Configuration settings
-├── requirements.txt         # Python dependencies
-├── setup.py                 # Quick setup script
-│
-├── data/
-│   └── earthquake.db        # SQLite database
-│
-├── models/
-│   ├── gp_model.pkl         # Trained GP model
-│   ├── scaler.pkl           # Feature scaler
-│   └── evaluation/          # Evaluation results
+├── app/
+│   ├── streamlit_app.py          # Main Streamlit application
+│   ├── components/
+│   │   ├── map_component.py      # Map visualization
+│   │   └── visualizations.py     # Charts and gauges
+│   └── assets/                   # Static files
 │
 ├── src/
 │   ├── data/
-│   │   ├── api_client.py    # USGS API client
-│   │   ├── database.py      # SQLite operations
-│   │   └── etl_pipeline.py  # ETL orchestration
+│   │   ├── api_client.py         # USGS API client
+│   │   ├── database.py           # SQLite database handler
+│   │   └── etl_pipeline.py       # ETL orchestration
 │   │
 │   ├── features/
-│   │   ├── temporal_features.py
-│   │   ├── spatial_features.py
-│   │   ├── rolling_features.py
-│   │   └── feature_pipeline.py
+│   │   ├── feature_pipeline.py   # Feature engineering orchestration
+│   │   ├── temporal_features.py  # Time-based features
+│   │   ├── spatial_features.py   # Location-based features
+│   │   └── rolling_features.py   # Rolling window statistics
 │   │
 │   ├── model/
-│   │   ├── kernel.py        # GP kernel design
-│   │   ├── train.py         # Model training
-│   │   ├── predict.py       # Inference
-│   │   └── evaluate.py      # Evaluation metrics
+│   │   ├── train.py              # Model training
+│   │   ├── predict.py            # Prediction with uncertainty
+│   │   ├── evaluate.py           # Model evaluation metrics
+│   │   ├── kernel.py             # GP kernel definitions
+│   │   └── data_prep.py          # Data preparation
 │   │
 │   └── utils/
-│       ├── logger.py
-│       └── helpers.py
-│
-├── app/
-│   ├── streamlit_app.py     # Main Streamlit app
-│   └── components/          # UI components
+│       ├── helpers.py            # Utility functions
+│       ├── logger.py             # Logging configuration
+│       └── progress.py           # Progress bar utilities
 │
 ├── scripts/
-│   ├── run_etl.py
-│   ├── run_features.py
-│   ├── train_model.py
-│   └── deploy.sh
+│   ├── run_etl.py                # Run ETL pipeline
+│   ├── run_features.py           # Generate features
+│   ├── train_model.py            # Train model
+│   └── deploy.sh                 # Deployment script
 │
-└── notebooks/               # Jupyter notebooks
+├── models/
+│   ├── gp_model.pkl              # Trained GP model
+│   ├── scaler.pkl                # Feature scaler
+│   ├── feature_config.json       # Feature configuration
+│   └── evaluation/               # Evaluation results
+│
+├── data/
+│   ├── earthquake.db             # SQLite database
+│   ├── raw/                      # Raw data
+│   └── processed/                # Processed features
+│
+├── .streamlit/
+│   └── config.toml               # Streamlit theme (dark mode)
+│
+├── config.yaml                   # Project configuration
+├── requirements.txt              # Python dependencies
+├── setup.py                      # Package setup
+└── README.md                     # This file
 ```
 
-## 🚀 Quick Start
-
-### Option 1: Automated Setup
-
-```bash
-# Clone repository
-git clone https://github.com/yourusername/earthquake-magnitude-predictor.git
-cd earthquake-magnitude-predictor
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run automated setup (creates demo data & trains model)
-python setup.py --demo
-
-# Launch app
-streamlit run app/streamlit_app.py
-```
-
-### Option 2: Manual Setup
-
-```bash
-# Install dependencies
-pip install -r requirements.txt
-
-# Step 1: Fetch earthquake data
-python scripts/run_etl.py --days 30 --min-mag 2.5
-
-# Step 2: Compute features
-python scripts/run_features.py
-
-# Step 3: Train model
-python scripts/train_model.py --kernel simple
-
-# Step 4: Run app
-streamlit run app/streamlit_app.py
-```
-
-## 📖 Usage
-
-### Command Line Scripts
-
-```bash
-# ETL: Fetch earthquake data
-python scripts/run_etl.py --days 30 --min-mag 2.5 --limit 5000
-
-# Features: Compute rolling statistics
-python scripts/run_features.py --min-mag 3.0
-
-# Train: Train GP model
-python scripts/train_model.py --kernel simple --max-samples 2000
-
-# Available kernels: simple, composite, advanced
-```
-
-### Python API
-
-```python
-# Make predictions
-from src.model.predict import EarthquakePredictor
-
-predictor = EarthquakePredictor()
-predictor.load()
-
-result = predictor.predict(
-    latitude=-17.9,
-    longitude=-178.4,
-    depth=100.0
-)
-
-print(f"Magnitude: {result['magnitude']:.2f} ± {result['std']:.2f}")
-print(f"95% CI: [{result['ci_lower']:.2f}, {result['ci_upper']:.2f}]")
-```
-
-## 🧠 Model Details
-
-### Gaussian Process Regression
-
-The model uses GPR for probabilistic magnitude prediction:
-
-* **Why GPR?** Inherent uncertainty quantification without additional calibration
-* **Kernel** : RBF + WhiteKernel (configurable)
-* **Training** : Marginal likelihood optimization
-
-### Features (18 total)
-
-| Category    | Features                                |
-| ----------- | --------------------------------------- |
-| Temporal    | Hour (cyclical), Day of week (cyclical) |
-| Spatial     | Latitude, Longitude, Depth (normalized) |
-| Rolling 7d  | Event count, Mean/Max/Std magnitude     |
-| Rolling 30d | Event count, Mean/Max/Std magnitude     |
-| Derived     | Days since M4+ event, Seismic density   |
-| Quality     | Station count, Gap, Distance, RMS       |
-
-### Evaluation Metrics
-
-| Metric      | Description                  |
-| ----------- | ---------------------------- |
-| MAE         | Mean Absolute Error          |
-| RMSE        | Root Mean Square Error       |
-| R²         | Coefficient of determination |
-| Calibration | CI coverage accuracy         |
-
-## ☁️ Deployment
-
-### Deploy to Streamlit Cloud
-
-1. **Push to GitHub** :
-
-```bash
-git add .
-git commit -m "Initial commit"
-git push origin main
-```
-
-2. **Deploy on Streamlit Cloud** :
-
-* Go to [share.streamlit.io](https://share.streamlit.io/)
-* Click "New app"
-* Select your repository
-* Set main file: `app/streamlit_app.py`
-* Click "Deploy!"
-
-### Important Notes
-
-* Ensure `models/gp_model.pkl` and `models/scaler.pkl` are committed
-* The app will use `setup.py --demo` if database is missing
-* Free tier has resource limits (~1GB RAM)
-
-## 📊 Data Source
-
-[USGS Earthquake Hazards Program](https://earthquake.usgs.gov/fdsnws/event/1/)
-
-* Global earthquake data
-* Updated in near real-time
-* Free public API
+---
 
 ## 🔧 Configuration
 
-Edit `config.yaml` to customize:
+### config.yaml
 
 ```yaml
-# Data settings
 data:
-  days_to_fetch: 30
-  min_magnitude_for_training: 2.5
-
-# Feature engineering
-features:
-  rolling_windows: [7, 30]
-  spatial_radius_km: 200
-
-# Model settings
+  usgs_api_url: "https://earthquake.usgs.gov/fdsnws/event/1/query"
+  min_magnitude: 2.5
+  days_back: 30
+  
 model:
-  test_size: 0.2
-  kernel:
-    rbf_length_scale: 1.0
+  kernel: "composite"
+  max_samples: 2000
+  confidence_level: 0.95
+  
+app:
+  theme: "dark"
+  map_zoom: 3
 ```
 
-## 📝 License
+### .streamlit/config.toml
 
-MIT License - see [LICENSE](https://claude.ai/chat/LICENSE) for details.
+```toml
+[theme]
+base = "dark"
+backgroundColor = "#0e1117"
+secondaryBackgroundColor = "#262730"
+textColor = "#fafafa"
+primaryColor = "#667eea"
+```
+
+---
+
+## 📊 Model Details
+
+### Gaussian Process Regression
+
+The model uses a composite kernel combining:
+
+| Kernel                      | Purpose                            |
+| --------------------------- | ---------------------------------- |
+| **RBF**               | Captures smooth spatial variations |
+| **Matérn**           | Models rough spatial patterns      |
+| **RationalQuadratic** | Handles multi-scale patterns       |
+
+### Features (18 total)
+
+| Category           | Features                                                 |
+| ------------------ | -------------------------------------------------------- |
+| **Spatial**  | Latitude, Longitude, Depth, Distance to plate boundary   |
+| **Temporal** | Hour, Day of week, Month (cyclical encoding)             |
+| **Rolling**  | 7-day count, 30-day count, Mean magnitude, Max magnitude |
+| **Derived**  | Depth category, Region cluster, Seismic zone             |
+
+### Evaluation Metrics
+
+| Metric                | Description                         |
+| --------------------- | ----------------------------------- |
+| **R²**         | Variance explained (target: > 0.7)  |
+| **MAE**         | Mean absolute error (target: < 0.5) |
+| **RMSE**        | Root mean squared error             |
+| **Calibration** | CI coverage accuracy                |
+
+---
+
+## 🌐 Data Source
+
+**USGS Earthquake Hazards Program**
+https://earthquake.usgs.gov/fdsnws/event/1/
+
+Real-time earthquake data updated every minute. The ETL pipeline:
+
+1. Fetches events from USGS API
+2. Stores in SQLite database
+3. Generates engineered features
+4. Caches for fast predictions
+
+---
+
+## 📦 Dependencies
+
+```
+requests>=2.31.0          # API calls
+pandas>=2.0.0             # Data handling
+numpy>=1.24.0             # Numerical computing
+scikit-learn>=1.3.0       # Machine learning
+plotly>=5.18.0            # Visualizations
+streamlit>=1.29.0         # Web app
+streamlit-folium>=0.15.0  # Interactive maps
+folium>=0.15.0            # Map rendering
+pyyaml>=6.0               # Config files
+tqdm>=4.66.0              # Progress bars
+```
+
+---
+
+## 🚢 Deployment
+
+### Streamlit Cloud
+
+1. Push to GitHub
+2. Connect to [share.streamlit.io](https://share.streamlit.io)
+3. Deploy with:
+   - Main file: `app/streamlit_app.py`
+   - Python: 3.9+
+
+### Docker
+
+```dockerfile
+FROM python:3.9-slim
+WORKDIR /app
+COPY . .
+RUN pip install -r requirements.txt
+EXPOSE 8501
+CMD ["streamlit", "run", "app/streamlit_app.py"]
+```
+
+```bash
+docker build -t earthquake-predictor .
+docker run -p 8501:8501 earthquake-predictor
+```
+
+---
+
+## ⚠️ Disclaimer
+
+This tool provides **statistical estimates** based on historical patterns.
+
+**It cannot predict:**
+
+- When an earthquake will occur
+- The exact magnitude of future earthquakes
+- Whether an earthquake will happen at all
+
+**Do not use for:**
+
+- Emergency planning
+- Evacuation decisions
+- Safety-critical applications
+
+---
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+---
 
 ## 🙏 Acknowledgments
 
-* USGS Earthquake Hazards Program for data
-* Scikit-learn for GP implementation
-* Streamlit for the web framework
+- **USGS** - Earthquake data API
+- **Anthropic** - AI assistance
+- **Streamlit** - Web framework
+- **Ollama** - Local LLM inference
+
+---
