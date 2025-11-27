@@ -31,7 +31,7 @@ def main():
     parser.add_argument(
         '--max-samples',
         type=int,
-        default=None,
+        default=4000,
         help='Maximum training samples'
     )
     

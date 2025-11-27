@@ -1,10 +1,10 @@
 {
   "kernel_type": "simple",
-  "n_train_samples": 10106,
+  "n_train_samples": 3200,
   "n_features": 21,
-  "duration_seconds": 1878.104661,
-  "log_marginal_likelihood": -2331.5237835570206,
+  "duration_seconds": 106.534597,
+  "log_marginal_likelihood": -917.9026008022938,
   "initial_kernel": "1**2 * RBF(length_scale=1) + WhiteKernel(noise_level=0.1)",
-  "optimized_kernel": "0.854**2 * RBF(length_scale=4.04) + WhiteKernel(noise_level=0.0737)",
-  "trained_at": "2025-11-27T00:09:41.843037"
+  "optimized_kernel": "0.998**2 * RBF(length_scale=5.56) + WhiteKernel(noise_level=0.0809)",
+  "trained_at": "2025-11-27T03:05:48.745739"
 }
