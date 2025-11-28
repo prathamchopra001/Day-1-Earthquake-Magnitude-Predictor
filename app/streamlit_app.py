@@ -1,3 +1,8 @@
+"""
+Earthquake Magnitude Predictor - Streamlit Application
+Layout: 3 columns - Inputs | Map+Results | LLM Text
+"""
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -217,7 +222,7 @@ def check_ollama_status():
         return False
 
 
-def call_ollama(prompt, model="llama3.2"):
+def call_ollama(prompt, model="llama3.1:8b"):
     """Call Ollama API to generate text."""
     import requests
     
@@ -230,10 +235,10 @@ def call_ollama(prompt, model="llama3.2"):
                 "stream": False,
                 "options": {
                     "temperature": 0.7,
-                    "num_predict": 60
+                    "num_predict": 200  # Increased for 5-6 sentences
                 }
             },
-            timeout=15
+            timeout=30  # Increased timeout for longer response
         )
         
         if response.status_code == 200:
@@ -245,7 +250,7 @@ def call_ollama(prompt, model="llama3.2"):
 
 
 def generate_llm_text(result, latitude, longitude, depth):
-    """Generate simple 1-2 sentence analysis like Google Weather."""
+    """Generate 5-6 sentence analysis using Ollama LLM."""
     mag = result['magnitude']
     std = result['std']
     ci_lower = result['ci_lower']
@@ -259,10 +264,13 @@ def generate_llm_text(result, latitude, longitude, depth):
     # Depth type
     if depth < 70:
         depth_type = "shallow"
+        depth_impact = "Shallow earthquakes typically cause more surface shaking and damage."
     elif depth < 300:
         depth_type = "intermediate"
+        depth_impact = "Intermediate depth earthquakes can still be felt over wide areas."
     else:
         depth_type = "deep"
+        depth_impact = "Deep earthquakes generally cause less surface damage."
     
     # Activity level
     if count_7d > 10:
@@ -272,43 +280,47 @@ def generate_llm_text(result, latitude, longitude, depth):
     else:
         activity = "relatively quiet"
     
-    # Create simple prompt for Ollama
-    prompt = f"""Write exactly 2 short sentences about this earthquake prediction. Be simple like a weather app.
+    # Confidence level
+    if std < 0.3:
+        confidence = "high confidence"
+    elif std < 0.6:
+        confidence = "moderate confidence"
+    else:
+        confidence = "lower confidence"
+    
+    # Create detailed prompt for Ollama
+    prompt = f"""Write a 5-6 sentence summary about this earthquake prediction for a general audience. Be informative but easy to understand.
 
-Data:
-- Predicted: M{mag:.1f} ({severity})
-- Depth: {depth}km ({depth_type})
-- Area: {activity} ({count_7d} quakes in 7 days)
-- Range: M{ci_lower:.1f} to M{ci_upper:.1f}
+Location: {latitude:.2f}°, {longitude:.2f}°
+Predicted Magnitude: M{mag:.1f} ({severity})
+Possible Range: M{ci_lower:.1f} to M{ci_upper:.1f} (95% confidence)
+Depth: {depth}km ({depth_type})
+Model Confidence: {confidence} (±{std:.2f})
+Recent Activity: {count_7d} earthquakes in past 7 days, {count_30d} in past 30 days
+Area Status: {activity}
 
-Example style: "Moderate earthquake activity expected. Shallow depth may increase surface impact."
+Cover these points in 5-6 sentences:
+1. The predicted magnitude and what it means
+2. The uncertainty range and confidence level
+3. How depth affects potential impact
+4. Recent seismic activity in the region
+5. General safety context (educational, not a warning)
 
-Write only 2 simple sentences, nothing else:"""
+Write in a clear, informative tone. Do not use bullet points. Just write 5-6 flowing sentences:"""
 
     # Try to call Ollama
     llm_response = call_ollama(prompt)
     
     if llm_response:
-        # Clean up response - just get the sentences
-        clean = llm_response.strip().split('\n')[0:2]
-        return ' '.join(clean)
+        # Clean up response
+        clean = llm_response.strip()
+        # Remove any leading/trailing quotes if present
+        if clean.startswith('"') and clean.endswith('"'):
+            clean = clean[1:-1]
+        return clean
     
-    # Fallback - simple 2 sentences
-    if mag < 3:
-        impact = "Usually not felt by people."
-    elif mag < 5:
-        impact = "May be felt but unlikely to cause damage."
-    elif mag < 6:
-        impact = "Could cause minor damage to buildings."
-    else:
-        impact = "Could cause significant damage in the area."
-    
-    if count_7d > 5:
-        activity_text = f"This region has been seismically active with {count_7d} recent earthquakes."
-    else:
-        activity_text = f"This area has been relatively quiet recently."
-    
-    return f"Magnitude {mag:.1f} ({severity.lower()}) earthquake expected. {impact} {activity_text}"
+    # If Ollama is not available, show error message
+    return "⚠️ <b>Ollama is not running.</b><br><br>To enable AI summaries, start Ollama with:<br><code>ollama serve</code><br><br>Then pull a model:<br><code>ollama pull llama3.2</code>"
 
 
 def make_prediction(predictor, latitude, longitude, depth):
@@ -600,14 +612,21 @@ def main():
     
     # ========== RIGHT COLUMN: LLM TEXT ==========
     with right_col:
-        st.markdown('<p class="section-header">💡 SUMMARY</p>', unsafe_allow_html=True)
+        st.markdown('<p class="section-header">💡 AI SUMMARY</p>', unsafe_allow_html=True)
+        
+        # Show Ollama status
+        ollama_running = check_ollama_status()
+        if ollama_running:
+            st.markdown('<span style="color: #38ef7d; font-size: 0.8rem;">🟢 Ollama Connected</span>', unsafe_allow_html=True)
+        else:
+            st.markdown('<span style="color: #f5576c; font-size: 0.8rem;">🔴 Ollama Offline</span>', unsafe_allow_html=True)
         
         if result:
             # Use cached LLM response if location hasn't changed
             cache_key = f"{latitude:.2f}_{longitude:.2f}_{depth}"
             
             if 'llm_cache_key' not in st.session_state or st.session_state.llm_cache_key != cache_key:
-                with st.spinner("✨"):
+                with st.spinner("✨ Generating AI summary..."):
                     llm_text = generate_llm_text(result, latitude, longitude, depth)
                     st.session_state.llm_text = llm_text
                     st.session_state.llm_cache_key = cache_key
